@@ -65,6 +65,8 @@ class ShuhaigeSpider(Spider):
                     if '请点击下一页继续阅读' in content:
                         page = page + 1
                         has_next = True
+                    elif '请大家收藏：' in content:
+                        continue
                     else:
                         contents.append(content)
             page += 1
