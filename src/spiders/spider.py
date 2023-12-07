@@ -34,10 +34,7 @@ class ShuhaigeSpider(Spider):
 
     def fetch_book(self, book_id: int):
         url = f'https://www.shuhaige.net/{book_id}/'
-        response = self.s.get(url)
-
-        if response.status_code == 403:
-            response = self.s.get(url)
+        response = self.get_retryable(url)
 
         book_title = ''
         chapters = {}
@@ -50,18 +47,32 @@ class ShuhaigeSpider(Spider):
         return book_title, chapters
 
     def fetch_chapter(self, book_id: int, chapter_id: int):
-        url = f'https://www.shuhaige.net/{book_id}/{chapter_id}.html'
+        chapter_title = ''
+        contents = []
+        page = 1
+        has_next = True
+        while has_next:
+            has_next = False
+            url = f'https://www.shuhaige.net/{book_id}/{chapter_id}.html'
+            if page > 1:
+                url = f'https://www.shuhaige.net/{book_id}/{chapter_id}_{page}.html'
+            response = self.get_retryable(url)
+            if response.status_code == 200:
+                soup = BeautifulSoup(response.text, 'html.parser')
+                chapter_title = soup.find('div', {'class': 'bookname'}).find('h1').text
+                for p in soup.find('div', {'id': 'content'}).find_all('p'):
+                    content = p.text
+                    if '请点击下一页继续阅读' in content:
+                        page = page + 1
+                        has_next = True
+                    else:
+                        contents.append(content)
+            page += 1
+        return chapter_title, contents
+
+    def get_retryable(self, url: str):
         response = self.s.get(url)
 
         if response.status_code == 403:
             response = self.s.get(url)
-
-        chapter_title = ''
-        contents = []
-        if response.status_code == 200:
-            soup = BeautifulSoup(response.text, 'html.parser')
-            chapter_title = soup.find('div', {'class': 'bookname'}).find('h1').text
-            for p in soup.find('div', {'id': 'content'}).find_all('p'):
-                if p.text != '本小章还未完，请点击下一页继续阅读后面精彩内容！':
-                    contents.append(p.text)
-        return chapter_title, contents
+        return response
