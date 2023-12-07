@@ -56,6 +56,7 @@ class ShuhaigeSpider(Spider):
             url = f'https://www.shuhaige.net/{book_id}/{chapter_id}.html'
             if page > 1:
                 url = f'https://www.shuhaige.net/{book_id}/{chapter_id}_{page}.html'
+            print(url)
             response = self.get_retryable(url)
             if response.status_code == 200:
                 soup = BeautifulSoup(response.text, 'html.parser')
@@ -63,12 +64,11 @@ class ShuhaigeSpider(Spider):
                 for p in soup.find('div', {'id': 'content'}).find_all('p'):
                     content = p.text
                     if '请点击下一页继续阅读' in content:
-                        page = page + 1
                         has_next = True
-                    elif '请大家收藏：' in content:
-                        continue
-                    else:
+                    elif '请大家收藏：' not in content:
                         contents.append(content)
+            else:
+                print(f'{url} {response.status_code}')
             page += 1
         return chapter_title, contents
 
