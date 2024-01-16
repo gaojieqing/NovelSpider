@@ -20,12 +20,14 @@ class ShuhaigeSpider(Spider):
         super().download(book_id)
         book_title, chapters = self.fetch_book(book_id)
         print(f'{book_title} 开始下载')
+        chapter_ids = list(chapters.values())
+        chapter_ids.sort()
         folder_path = os.path.dirname(os.path.abspath(__file__))
         while os.path.basename(folder_path) != "NovelSpider":
             folder_path = os.path.dirname(folder_path)
         file_path = os.path.join(folder_path, f'docs/{book_title}.md')
         with open(file_path, 'w') as f:
-            for chapter_id in chapters.values():
+            for chapter_id in chapter_ids:
                 chapter_title, contents = self.fetch_chapter(book_id, chapter_id)
                 f.write(f'# {chapter_title}\n')
                 f.write('\n'.join(contents))
@@ -43,7 +45,7 @@ class ShuhaigeSpider(Spider):
             book_title = soup.find('meta', {'property': 'og:novel:book_name'}).get('content')
             for dd in soup.find('div', {'id': 'list'}).find_all('dd'):
                 a = dd.find('a')
-                chapters[a.text] = re.findall(r'\d+', a.get("href"))[1]
+                chapters[a.text] = int(re.findall(r'\d+', a.get("href"))[1])
         return book_title, chapters
 
     def fetch_chapter(self, book_id: int, chapter_id: int):
