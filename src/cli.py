@@ -1,5 +1,5 @@
-from spiders.spider import ShuhaigeSpider
+from spiders.spider import ShuhaigeSpider, QQSpider
 
 if __name__ == '__main__':
-    spider = ShuhaigeSpider()
-    spider.download(221701)
+    spider = QQSpider()
+    spider.download(46557853)
